@@ -17,6 +17,7 @@ from .enhanced_role_playing import (
     OwlRolePlaying,
     OwlGAIARolePlaying,
     run_society,
+    run_chimera_society,
     arun_society,
 )
 from .gaia import GAIABenchmark

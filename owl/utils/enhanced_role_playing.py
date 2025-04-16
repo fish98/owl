@@ -21,6 +21,8 @@ from camel.messages.base import BaseMessage
 from camel.societies import RolePlaying
 from camel.logger import get_logger
 
+import os
+import logging
 
 from copy import deepcopy
 
@@ -436,6 +438,84 @@ class OwlGAIARolePlaying(OwlRolePlaying):
             ),
         )
 
+def run_chimera_society(
+    society: OwlRolePlaying,
+    round_limit: int = 15,
+    member_name: str = "developer_1",
+    log_dir: str = "tmp/",
+) -> Tuple[str, List[dict], dict]:
+    
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f"{member_name}_X.log") # TO CHANGE
+
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setLevel(logging.INFO)
+    file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+
+    overall_completion_token_count = 0
+    overall_prompt_token_count = 0
+
+    chat_history = []
+    init_prompt = """
+    Now please give me instructions to solve over overall task step by step. If the task requires some specific knowledge, please instruct me to use tools to complete the task.
+        """
+    input_msg = society.init_chat(init_prompt)
+    for _round in range(round_limit):
+        assistant_response, user_response = society.step(input_msg)
+        # Check if usage info is available before accessing it
+        if assistant_response.info.get("usage") and user_response.info.get("usage"):
+            overall_completion_token_count += assistant_response.info["usage"].get(
+                "completion_tokens", 0
+            ) + user_response.info["usage"].get("completion_tokens", 0)
+            overall_prompt_token_count += assistant_response.info["usage"].get(
+                "prompt_tokens", 0
+            ) + user_response.info["usage"].get("prompt_tokens", 0)
+
+        # convert tool call to dict
+        tool_call_records: List[dict] = []
+        if assistant_response.info.get("tool_calls"):
+            for tool_call in assistant_response.info["tool_calls"]:
+                tool_call_records.append(tool_call.as_dict())
+
+        _data = {
+            "user": user_response.msg.content
+            if hasattr(user_response, "msg") and user_response.msg
+            else "",
+            "assistant": assistant_response.msg.content
+            if hasattr(assistant_response, "msg") and assistant_response.msg
+            else "",
+            "tool_calls": tool_call_records,
+        }
+
+        chat_history.append(_data)
+        logger.info(
+            f"Round #{_round} user_response:\n {user_response.msgs[0].content if user_response.msgs and len(user_response.msgs) > 0 else ''}"
+        )
+        logger.info(
+            f"Round #{_round} assistant_response:\n {assistant_response.msgs[0].content if assistant_response.msgs and len(assistant_response.msgs) > 0 else ''}"
+        )
+
+        if (
+            assistant_response.terminated
+            or user_response.terminated
+            or "TASK_DONE" in user_response.msg.content
+        ):
+            break
+
+        input_msg = assistant_response.msg
+
+    answer = chat_history[-1]["assistant"]
+    token_info = {
+        "completion_token_count": overall_completion_token_count,
+        "prompt_token_count": overall_prompt_token_count,
+    }
+    
+    # Remove the file handler after logging is complete
+    logger.removeHandler(file_handler)
+
+    return answer, chat_history, token_info
 
 def run_society(
     society: OwlRolePlaying,
