@@ -27,6 +27,7 @@ import logging
 from copy import deepcopy
 
 logger = get_logger(__name__)
+print(__name__)
 
 
 class OwlRolePlaying(RolePlaying):
@@ -441,12 +442,12 @@ class OwlGAIARolePlaying(OwlRolePlaying):
 def run_chimera_society(
     society: OwlRolePlaying,
     round_limit: int = 15,
-    member_name: str = "developer_1",
+    member_name: str = "developer_0",
     log_dir: str = "tmp/",
 ) -> Tuple[str, List[dict], dict]:
     
     os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, f"{member_name}_X.log") # TO CHANGE
+    log_file = os.path.join(log_dir, f"{member_name}_TIME.log") # TO CHANGE
 
     file_handler = logging.FileHandler(log_file, mode="w")
     file_handler.setLevel(logging.INFO)
