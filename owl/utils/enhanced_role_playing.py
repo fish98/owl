@@ -442,12 +442,13 @@ class OwlGAIARolePlaying(OwlRolePlaying):
 def run_chimera_society(
     society: OwlRolePlaying,
     round_limit: int = 15,
-    member_name: str = "developer_0",
+    member_id: str = "dev-1",
     log_dir: str = "tmp/",
+    event_index: int = 0,
 ) -> Tuple[str, List[dict], dict]:
     
     os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, f"{member_name}_TIME.log") # TO CHANGE
+    log_file = os.path.join(log_dir, f"{member_id}_execution_solution_{event_index}.log")
 
     file_handler = logging.FileHandler(log_file, mode="w")
     file_handler.setLevel(logging.INFO)
