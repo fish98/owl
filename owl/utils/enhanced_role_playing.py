@@ -445,10 +445,12 @@ def run_chimera_society(
     member_id: str = "dev-1",
     log_dir: str = "tmp/",
     event_index: int = 0,
+    week: int = 0,
+    date: str = "Monday",
 ) -> Tuple[str, List[dict], dict]:
     
     os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, f"{member_id}_execution_solution_{event_index}.log")
+    log_file = os.path.join(log_dir, f"{member_id}_week_{week}_{date}_execution_solution_{event_index}.log")
 
     file_handler = logging.FileHandler(log_file, mode="w")
     file_handler.setLevel(logging.INFO)
